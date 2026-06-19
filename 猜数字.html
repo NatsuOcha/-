@@ -1,0 +1,225 @@
+Optimized tool selection```html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>猜数字游戏</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e8f7e7 0%, #d6f1d4 50%, #c8e8c5 100%);
+            color: #2f5d3b;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .game-card {
+            width: min(480px, 90%);
+            padding: 28px 30px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(85, 130, 76, 0.2);
+            border-radius: 22px;
+            box-shadow: 0 18px 36px rgba(83, 120, 75, 0.18);
+        }
+
+        .game-card h1 {
+            margin: 0 0 12px;
+            font-size: 2rem;
+            letter-spacing: 0.04em;
+        }
+
+        .game-card p {
+            line-height: 1.7;
+            margin: 0 0 20px;
+            color: #4f6f4a;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+
+        .input-group input[type="number"] {
+            flex: 1 1 180px;
+            padding: 14px 16px;
+            border: 1px solid #9fc89f;
+            border-radius: 14px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s ease;
+            background: #f7fff7;
+            color: #2f5d3b;
+        }
+
+        .input-group input[type="number"]:focus {
+            border-color: #79b279;
+            box-shadow: 0 0 0 4px rgba(121, 178, 121, 0.15);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .button-group button {
+            flex: 1;
+            min-width: 120px;
+            border: none;
+            border-radius: 999px;
+            padding: 14px 18px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.2s ease;
+            color: #fff;
+        }
+
+        .button-group button:hover {
+            transform: translateY(-1px);
+        }
+
+        .button-submit {
+            background: linear-gradient(135deg, #5ca45c 0%, #4c8c4c 100%);
+            box-shadow: 0 10px 18px rgba(76, 140, 76, 0.28);
+        }
+
+        .button-reset {
+            background: linear-gradient(135deg, #9dcf9d 0%, #7db17d 100%);
+            box-shadow: 0 10px 18px rgba(125, 177, 125, 0.24);
+        }
+
+        .button-reset:hover {
+            background: linear-gradient(135deg, #8ac38a 0%, #6fa76f 100%);
+        }
+
+        .hint-box {
+            margin-top: 22px;
+            padding: 18px 20px;
+            border-radius: 18px;
+            background: #f1fbf1;
+            border: 1px solid #c6e4c6;
+            color: #315433;
+            min-height: 72px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        .hint-box.success {
+            background: #eff9ef;
+            border-color: #7fc47f;
+            color: #2e5b2e;
+        }
+
+        .hint-box.warning {
+            background: #f7f8e8;
+            border-color: #cdd79a;
+            color: #5b6333;
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #5f7a5f;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <section class="game-card">
+        <h1>猜数字小游戏</h1>
+        <p>系统已随机生成一个 1 到 100 之间的整数。请输入你的猜测，然后点击“提交”。页面会给出提示。你可以随时点击“重置”重新开始。</p>
+
+        <div class="input-group">
+            <input id="guessInput" type="number" placeholder="请输入 1 - 100 之间的数字" min="1" max="100" />
+        </div>
+
+        <div class="button-group">
+            <button id="submitBtn" class="button-submit" type="button">提交答案</button>
+            <button id="resetBtn" class="button-reset" type="button">重置游戏</button>
+        </div>
+
+        <div id="resultHint" class="hint-box">请先输入一个数字，然后提交猜测。</div>
+
+        <div class="footer" id="statusText">
+            已尝试次数：0 次
+        </div>
+    </section>
+
+    <script>
+        const guessInput = document.getElementById("guessInput");
+        const submitBtn = document.getElementById("submitBtn");
+        const resetBtn = document.getElementById("resetBtn");
+        const resultHint = document.getElementById("resultHint");
+        const statusText = document.getElementById("statusText");
+
+        let targetNumber = 0;
+        let attemptCount = 0;
+        let gameOver = false;
+
+        function initGame() {
+            targetNumber = Math.floor(Math.random() * 100) + 1;
+            attemptCount = 0;
+            gameOver = false;
+            guessInput.value = "";
+            guessInput.disabled = false;
+            resultHint.textContent = "请先输入一个数字，然后提交猜测。";
+            resultHint.className = "hint-box";
+            statusText.textContent = "已尝试次数：0 次";
+        }
+
+        function updateStatus() {
+            statusText.textContent = `已尝试次数：${attemptCount} 次`;
+        }
+
+        function showHint(message, type = "") {
+            resultHint.textContent = message;
+            resultHint.className = `hint-box${type ? ` ${type}` : ""}`;
+        }
+
+        function handleSubmit() {
+            if (gameOver) {
+                showHint("游戏已结束，请点击重置开始新一轮。", "warning");
+                return;
+            }
+
+            const guessValue = Number(guessInput.value);
+            if (!guessValue || guessValue < 1 || guessValue > 100) {
+                showHint("请输入 1 到 100 的有效数字。", "warning");
+                return;
+            }
+
+            attemptCount += 1;
+            updateStatus();
+
+            if (guessValue === targetNumber) {
+                showHint(`恭喜你！猜对了，答案就是 ${targetNumber}。你一共尝试了 ${attemptCount} 次。`, "success");
+                gameOver = true;
+                guessInput.disabled = true;
+            } else if (guessValue < targetNumber) {
+                showHint("太小了，再往大一点试试。", "warning");
+            } else {
+                showHint("太大了，往小一点试试。", "warning");
+            }
+        }
+
+        submitBtn.addEventListener("click", handleSubmit);
+        resetBtn.addEventListener("click", initGame);
+        guessInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                handleSubmit();
+            }
+        });
+
+        initGame();
+    </script>
+</body>
+</html>
